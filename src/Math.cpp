@@ -54,9 +54,37 @@ vector<vec3> circle(int numberOfPoints, int radius) {
 	return circle;
 }
 
+Vertex closestToBasePlane(vector<Vertex> base, vector<Vertex> branch) {
+	//provides vertical normal due to anti-clockwise circle
+	vec3 normal = glm::cross(base.at(1).pos - base.at(0).pos, base.at(2).pos - base.at(0).pos);//vector from A -> B = B-A therefore, cross(0 -> 1, 0 -> 2). Base should have at least 4 vertices
+	float minLength = -1;
+	Vertex minPoint;
+	for (int i = 0; i < branch.size(); i++) {
+		float length = glm::length(projection(branch.at(i).pos - base.at(0).pos, normal));
+		if (minLength == -1 || minLength > length) {
+			minLength = length;
+			minPoint = branch.at(i);
+		}
+	}
+	return minPoint;
+}
+
+Vertex closestBasePoint(vector<Vertex> base, Vertex closest) {
+	float minLength = -1;
+	Vertex minPoint;
+	for (int i = 0; i < base.size(); i++) {
+		float length = glm::length(base.at(i).pos - closest.pos);
+		if (minLength == -1 || minLength > length) {
+			minLength = length;
+			minPoint = base.at(i);
+		}
+	}
+	return minPoint;
+}
+
 bool pointIsAbove(vec3 branchPoint, vector<vec3> base, int baseIndex) {
-	int leftNeighbour = j - 1;
-	int rightNeighbour = j + 1;
+	int leftNeighbour = baseIndex - 1;
+	int rightNeighbour = baseIndex + 1;
 	if (leftNeighbour < 0) {
 		leftNeighbour = base.size() - 1;
 	}
@@ -76,6 +104,18 @@ bool pointIsAbove(vec3 branchPoint, vector<vec3> base, int baseIndex) {
 	}
 
 	vec3 halfVector = base.at(hleftIndex) - base.at(hrightIndex);//defines a line intersecting the base through the middle as far from the point at baseIndex as possible
+	vec3 a = base.at(hleftIndex) - left;
+	vec3 leftProj = projection(a, -halfVector);
+	a = base.at(hrightIndex) - right;
+	vec3 rightProj = projection(a, halfVector);
 
+}
+
+vec3 projection(vec3 a, vec3 b) {
+	return (
+		dot(a, b)
+		/(length(b)*length(b)
+			)
+		)*b;
 }
 
