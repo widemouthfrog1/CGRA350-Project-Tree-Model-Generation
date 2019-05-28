@@ -1,4 +1,6 @@
-#include "Math.h"
+#include "ProjectMath.h"
+
+using namespace Math;
 
 float getT(float t, vec3 point1, vec3 point2)
 {
@@ -9,7 +11,7 @@ float getT(float t, vec3 point1, vec3 point2)
 	return (c + t);
 }
 
-Spline spline(const vector<vec3> points, int divisions) {
+Spline Math::spline(const vector<vec3> points, int divisions) {
 	vector<vec3> controlPoints;
 	vector<vec3> interpolatedPoints;
 	vec3 p0 = points.at(0);
@@ -45,7 +47,7 @@ Spline spline(const vector<vec3> points, int divisions) {
 	return spline;
 }
 
-vector<vec3> circle(int numberOfPoints, int radius) {
+vector<vec3> Math::circle(int numberOfPoints, int radius) {
 	vector<vec3> circle;
 	float step = 2 * pi<float>()/numberOfPoints;
 	for (int i = 0; i < 2*pi<float>(); i += step) {
@@ -54,7 +56,7 @@ vector<vec3> circle(int numberOfPoints, int radius) {
 	return circle;
 }
 
-Vertex closestToBasePlane(vector<Vertex> base, vector<Vertex> branch) {
+Vertex Math::closestToBasePlane(vector<Vertex> base, vector<Vertex> branch) {
 	//provides vertical normal due to anti-clockwise circle
 	vec3 normal = glm::cross(base.at(1).pos - base.at(0).pos, base.at(2).pos - base.at(0).pos);//vector from A -> B = B-A therefore, cross(0 -> 1, 0 -> 2). Base should have at least 4 vertices
 	float minLength = -1;
@@ -69,7 +71,7 @@ Vertex closestToBasePlane(vector<Vertex> base, vector<Vertex> branch) {
 	return minPoint;
 }
 
-Vertex closestBasePoint(vector<Vertex> base, Vertex closest) {
+Vertex Math::closestBasePoint(vector<Vertex> base, Vertex closest) {
 	float minLength = -1;
 	Vertex minPoint;
 	for (int i = 0; i < base.size(); i++) {
@@ -82,40 +84,76 @@ Vertex closestBasePoint(vector<Vertex> base, Vertex closest) {
 	return minPoint;
 }
 
-bool pointIsAbove(vec3 branchPoint, vector<vec3> base, int baseIndex) {
-	int leftNeighbour = baseIndex - 1;
-	int rightNeighbour = baseIndex + 1;
-	if (leftNeighbour < 0) {
-		leftNeighbour = base.size() - 1;
+vector<int> Math::midPoint(int circleSize, int point1, int point2)
+{
+	vector<int> midPoints;
+	if (point2 > point1) {
+		if ((point2 - point1) % 2 == 0) {
+			midPoints.push_back(point1 + (point2 - point1) / 2);
+		}
+		else {
+			midPoints.push_back(point1 + (point2 - point1) / 2);
+			midPoints.push_back(point1 + (point2 - point1) / 2 + 1);
+		}
 	}
-	if (rightNeighbour == base.size()) {
-		rightNeighbour == 0;
+	else {
+		if ((point2 + circleSize - point1) % 2 == 0) {
+			if (point1 + (point2 + circleSize - point1) / 2 < circleSize) {
+				//if there is one mid-point
+				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2);
+			}
+			else {
+				//if there are 2 mid-points
+				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2 - circleSize);
+			}
+		}
+		else {
+			//if there is one mid-point
+			if (point1 + (point2 + circleSize - point1) / 2 < circleSize) {
+				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2);
+			}
+			else {
+				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2 - circleSize);
+			}
+			//if there are 2 mid-points
+			if (point1 + (point2 + circleSize - point1) / 2 + 1 < circleSize) {
+				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2 + 1);
+			}
+			else {
+				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2 + 1 - circleSize);
+			}
+		}
 	}
-	vec3 left = base.at(leftNeighbour);
-	vec3 right = base.at(rightNeighbour);
-	int rotation = base.size() / 4; //base.size must always be divisible by 4
-	int hleftIndex = baseIndex - rotation;
-	int hrightIndex = baseIndex + rotation;
-	if (hleftIndex < 0) {
-		hleftIndex = base.size() + hleftIndex;
-	}
-	if (hrightIndex >= base.size()) {
-		hleftIndex = hleftIndex - base.size();
-	}
-
-	vec3 halfVector = base.at(hleftIndex) - base.at(hrightIndex);//defines a line intersecting the base through the middle as far from the point at baseIndex as possible
-	vec3 a = base.at(hleftIndex) - left;
-	vec3 leftProj = projection(a, -halfVector);
-	a = base.at(hrightIndex) - right;
-	vec3 rightProj = projection(a, halfVector);
-
+	return midPoints;
 }
 
-vec3 projection(vec3 a, vec3 b) {
+int Math::getNeighbour(int circleSize, int point, bool leftNeighbour)
+{
+	int neighbour;
+	if (leftNeighbour) {
+		if (point - 1 == 0) {
+			neighbour = circleSize - 1;
+		}
+		else {
+			neighbour = point - 1;
+		}
+	}
+	else {
+		if (point + 1 == circleSize) {
+			neighbour = 0;
+		}
+		else {
+			neighbour = point + 1;
+		}
+	}
+	return neighbour;
+}
+
+
+vec3 Math::projection(vec3 a, vec3 b) {
 	return (
 		dot(a, b)
 		/(length(b)*length(b)
 			)
 		)*b;
 }
-

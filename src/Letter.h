@@ -6,6 +6,6 @@ using namespace std;
 class Letter {
 
 public:
-	virtual char getLetter() = 0;
+	virtual char getLetter() { return 'a'; };
 	
 };

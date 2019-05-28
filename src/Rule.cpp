@@ -9,5 +9,5 @@ Rule::~Rule() {
 }
 
 vector<Letter> Rule::checkRule(vector<Letter> tree) {
-
+	return vector<Letter>();
 }

@@ -6,7 +6,7 @@ using namespace std;
 
 class Letter;
 
-class Rule {
+struct Rule {
 	Letter input;
 	vector<Letter> output;
 
