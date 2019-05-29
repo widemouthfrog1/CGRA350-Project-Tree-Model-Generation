@@ -127,6 +127,53 @@ vector<int> Math::midPoint(int circleSize, int point1, int point2)
 	return midPoints;
 }
 
+//circle must have a number of points divisible by 4
+int Math::ninetyDegreeRotation(std::vector<Vertex> circle, int point, vec3 direction)
+{
+	int rotatedPoint;
+	int leftNeighbour = getNeighbour(circle.size(), point, true);
+	int rightNeighbour = getNeighbour(circle.size(), point, false);
+	vec3 leftProjection = projection(circle.at(leftNeighbour).pos, direction);
+	vec3 rightProjection = projection(circle.at(rightNeighbour).pos, direction);
+	if (acos(dot(direction, leftProjection)) == 1){
+		if (acos(dot(direction, rightProjection)) == 1) {
+			//find shortest, rotate in that direction
+			if (length(leftProjection) < length(rightProjection)) {
+				rotatedPoint = point - circle.size() / 4;
+			}
+			else {
+				rotatedPoint = point + circle.size() / 4;
+			}
+		}
+		else {
+			//rotate left
+			rotatedPoint = point - circle.size() / 4;
+		}
+	}
+	else {
+		if (acos(dot(direction, rightProjection)) == -1) {
+			//find largest, rotate in that direction
+			if (length(leftProjection) > length(rightProjection)) {
+				rotatedPoint = point - circle.size() / 4;
+			}
+			else {
+				rotatedPoint = point + circle.size() / 4;
+			}
+		}
+		else {
+			//rotate right
+			rotatedPoint = point + circle.size() / 4;
+		}
+	}
+	if (rotatedPoint < 0) {
+		rotatedPoint = circle.size() + rotatedPoint;
+	}
+	else if (rotatedPoint >= circle.size()) {
+		rotatedPoint = rotatedPoint - circle.size();
+	}
+	return rotatedPoint;
+}
+
 int Math::getNeighbour(int circleSize, int point, bool leftNeighbour)
 {
 	int neighbour;

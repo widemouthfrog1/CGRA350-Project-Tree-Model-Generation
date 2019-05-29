@@ -1,6 +1,6 @@
 #include "Branch.h"
 
-Branch::Branch(vector<vec3> base, vector<vector<vec3>> branches) {
+Branch::Branch(Math::Circle base, vector<Math::Circle> branches) {
 	this->base = base;
 	this->branches = branches;
 }
