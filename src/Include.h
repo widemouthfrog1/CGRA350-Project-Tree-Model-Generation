@@ -13,4 +13,5 @@
 #include "opengl.hpp"
 #include "cgra/cgra_mesh.hpp"
 
+#include "Circle.h"
 #include "ProjectMath.h"

@@ -47,6 +47,25 @@ Spline Math::spline(const vector<vec3> points, int divisions) {
 	return spline;
 }
 
+std::vector<float> Math::angleOfClosestPointsOnTwoCircles(Circle circle0, Circle circle1)
+{
+	std::vector<float> angles;
+	vec3 circle0to1 = circle1.center - circle0.center;
+	vec3 normal0 = cross(circle0.getPoint(0.0f).pos - circle0.center, circle0.getPoint(1.0f).pos - circle0.center);
+	vec3 projection0 = projection(normalize(circle0to1), normalize(normal0));
+	vec3 planeProjection0 = normalize((normalize(circle0to1) - normalize(projection0)))*circle0.radius;
+	angles.push_back(acos(dot(planeProjection0, circle0.getPoint(0.0f).pos)));
+
+	vec3 circle1to0 = circle0.center - circle1.center;
+	vec3 normal1 = cross(circle1.getPoint(0.0f).pos - circle1.center, circle1.getPoint(1.0f).pos - circle1.center);
+	vec3 projection1 = projection(normalize(circle1to0), normalize(normal1));
+	vec3 planeProjection1 = normalize((normalize(circle1to0) - normalize(projection1)))*circle1.radius;
+	angles.push_back(acos(dot(planeProjection1, circle1.getPoint(0.0f).pos)));
+
+	return angles;
+}
+
+
 vector<vec3> Math::circle(int numberOfPoints, int radius) {
 	vector<vec3> circle;
 	float step = 2 * pi<float>()/numberOfPoints;
@@ -55,7 +74,7 @@ vector<vec3> Math::circle(int numberOfPoints, int radius) {
 	}
 	return circle;
 }
-
+/*
 Vertex Math::closestToBasePlane(vector<Vertex> base, vector<Vertex> branch) {
 	//provides vertical normal due to anti-clockwise circle
 	vec3 normal = glm::cross(base.at(1).pos - base.at(0).pos, base.at(2).pos - base.at(0).pos);//vector from A -> B = B-A therefore, cross(0 -> 1, 0 -> 2). Base should have at least 4 vertices
@@ -83,49 +102,7 @@ Vertex Math::closestBasePoint(vector<Vertex> base, Vertex closest) {
 	}
 	return minPoint;
 }
-
-vector<int> Math::midPoint(int circleSize, int point1, int point2)
-{
-	vector<int> midPoints;
-	if (point2 > point1) {
-		if ((point2 - point1) % 2 == 0) {
-			midPoints.push_back(point1 + (point2 - point1) / 2);
-		}
-		else {
-			midPoints.push_back(point1 + (point2 - point1) / 2);
-			midPoints.push_back(point1 + (point2 - point1) / 2 + 1);
-		}
-	}
-	else {
-		if ((point2 + circleSize - point1) % 2 == 0) {
-			if (point1 + (point2 + circleSize - point1) / 2 < circleSize) {
-				//if there is one mid-point
-				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2);
-			}
-			else {
-				//if there are 2 mid-points
-				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2 - circleSize);
-			}
-		}
-		else {
-			//if there is one mid-point
-			if (point1 + (point2 + circleSize - point1) / 2 < circleSize) {
-				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2);
-			}
-			else {
-				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2 - circleSize);
-			}
-			//if there are 2 mid-points
-			if (point1 + (point2 + circleSize - point1) / 2 + 1 < circleSize) {
-				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2 + 1);
-			}
-			else {
-				midPoints.push_back(point1 + (point2 + circleSize - point1) / 2 + 1 - circleSize);
-			}
-		}
-	}
-	return midPoints;
-}
+*/
 
 //circle must have a number of points divisible by 4
 int Math::ninetyDegreeRotation(std::vector<Vertex> circle, int point, vec3 direction)
@@ -203,4 +180,10 @@ vec3 Math::projection(vec3 a, vec3 b) {
 		/(length(b)*length(b)
 			)
 		)*b;
+}
+
+void Math::Vertex::link(Vertex * vertex)
+{
+	connections.push_back(vertex->id);
+	vertex->connections.push_back(id);
 }

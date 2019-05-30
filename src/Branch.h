@@ -4,12 +4,13 @@
 using namespace std;
 using namespace glm;
 
+class Circle;
 
 class Branch {
 public:
-	Math::Circle base;
-	vector<Math::Circle> branches;
+	Circle base;
+	std::vector<Circle> branches;
 	Branch() {};
-	Branch(Math::Circle base, vector<Math::Circle> branches);
+	Branch(Circle base, std::vector<Circle> branches);
 	~Branch();
 };
