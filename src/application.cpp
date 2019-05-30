@@ -41,10 +41,10 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 
 	vector<Variable> alphabet;
 	vector<Rule> rules;
-	Circle base(vec3(0,0,0), 1, vec3(0,0,0));
+	Circle base(vec3(0,0,0), 2, vec3(0,0,0));
 	std::vector<Circle> branches;
-	branches.push_back(Circle(vec3(2, 10, 0), 1, vec3(0, 0, pi<float>() / 2)));
-	branches.push_back(Circle(vec3(-2, 10, 0), 1, vec3(0, 0, -pi<float>() / 2)));
+	branches.push_back(Circle(vec3(2, 5, 0), 1, vec3(0, 0, pi<float>() / 2)));
+	branches.push_back(Circle(vec3(0, 5, 2), 1, vec3(pi<float>() / 2, 0, 0)));
 	Branch branch(base, branches);
 	Variable start('A', branch);
 	TreeFactory treeMaker(alphabet, rules, start);

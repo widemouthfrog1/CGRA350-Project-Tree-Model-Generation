@@ -19,7 +19,7 @@ void Circle::addPoint(Vertex &point)
 
 Vertex Circle::getPoint(float angle)
 {
-	vec3 point = vec3(sin(angle), 0, cos(angle));
+	vec3 point = vec3(radius*sin(angle), 0, radius*cos(angle));
 	mat4 rotationMatrix = glm::rotate(mat4(1), rotation.x, vec3(1, 0, 0))*
 		glm::rotate(mat4(1), rotation.y, vec3(0, 1, 0))*
 		glm::rotate(mat4(1), rotation.z, vec3(0, 0, 1));
@@ -38,10 +38,10 @@ float Circle::getAngle(glm::vec3 point)
 	mat4 translateToOrigin = glm::translate(mat4(1), -center);
 	vec3 transformedPoint = rotationMatrix * translateToOrigin * vec4(point, 1);
 	if (!(transformedPoint.z < 0.001 && transformedPoint.z > -0.001)) {
-		return acos(transformedPoint.z);
+		return acos(transformedPoint.z/radius);
 	}
 	else {
-		return asin(transformedPoint.x);
+		return asin(transformedPoint.x/radius);
 	}
 	
 }
@@ -89,7 +89,7 @@ std::vector<Vertex> Circle::createFullCircle(int resolution)
 			glm::rotate(mat4(1), rotation.y, vec3(0, 1, 0))*
 			glm::rotate(mat4(1), rotation.z, vec3(0, 0, 1));
 		mat4 translateToPosition = glm::translate(mat4(1), center);
-		vec3 transformedPoint = translateToPosition * rotationMatrix  * vec4(vec3(sin(i), 0, cos(i)), 1);
+		vec3 transformedPoint = translateToPosition * rotationMatrix  * vec4(vec3(radius*sin(i), 0, radius*cos(i)), 1);
 
 		vertex.id = count;
 		vertex.pos = transformedPoint;

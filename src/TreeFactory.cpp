@@ -128,7 +128,7 @@ gl_mesh TreeFactory::createTree() {
 			}
 			neighbourBranchPoint.id = id++;
 			vec3 neighbourBranchPos = neighbourBranchPoint.pos;
-			vec3 average = (vertex.pos + vertexBranchPos + neighbourBranchPos)/3.0f;
+			vec3 average = (middlePoint + vertexBranchPos + neighbourBranchPos)/3.0f;
 
 			Vertex middleVertex;
 			middleVertex.id = id++;
