@@ -12,21 +12,20 @@ void Circle::addPoint(float angle)
 	points.push_back(getPoint(angle));
 }
 
-void Circle::addPoint(Math::Vertex point)//fix with pointers
+void Circle::addPoint(Vertex &point)
 {
 	points.push_back(point);
 }
 
-Math::Vertex Circle::getPoint(float angle)
+Vertex Circle::getPoint(float angle)
 {
 	vec3 point = vec3(sin(angle), 0, cos(angle));
 	mat4 rotationMatrix = glm::rotate(mat4(1), rotation.x, vec3(1, 0, 0))*
 		glm::rotate(mat4(1), rotation.y, vec3(0, 1, 0))*
 		glm::rotate(mat4(1), rotation.z, vec3(0, 0, 1));
-	mat4 translateToOrigin = glm::translate(mat4(1), -center);
-	mat4 translateBack = glm::translate(mat4(1), center);
-	Math::Vertex vertex;
-	vertex.pos = translateBack * rotationMatrix * translateToOrigin * vec4(point, 1);
+	mat4 translateToPosition = glm::translate(mat4(1), center);
+	Vertex vertex;
+	vertex.pos = translateToPosition * rotationMatrix * vec4(point, 1);
 	return vertex;
 }
 
@@ -37,15 +36,20 @@ float Circle::getAngle(glm::vec3 point)
 		glm::rotate(mat4(1), -rotation.y, vec3(0, 1, 0))*
 		glm::rotate(mat4(1), -rotation.z, vec3(0, 0, 1));
 	mat4 translateToOrigin = glm::translate(mat4(1), -center);
-	mat4 translateBack = glm::translate(mat4(1), center);
-	vec3 transformedPoint = translateBack * rotationMatrix * translateToOrigin * vec4(point, 1);
-	return acos(transformedPoint.z);
+	vec3 transformedPoint = rotationMatrix * translateToOrigin * vec4(point, 1);
+	if (!(transformedPoint.z < 0.001 && transformedPoint.z > -0.001)) {
+		return acos(transformedPoint.z);
+	}
+	else {
+		return asin(transformedPoint.x);
+	}
+	
 }
 
-std::vector<Math::Vertex> Circle::createCircle(int startingID)
+std::vector<Vertex> Circle::createCircle(int startingID)
 {
 	vector<int> completed;
-	std::vector<Math::Vertex> vertices;
+	std::vector<Vertex> vertices;
 	while (completed.size() < points.size()) {
 		int smallest;
 		for (int i = 0; i < points.size(); i++) {
@@ -69,14 +73,42 @@ std::vector<Math::Vertex> Circle::createCircle(int startingID)
 		if (j == vertices.size()) {
 			j = 0;
 		}
-		vertices.at(i).connections.push_back(j);
+		vertices.at(i).link(vertices.at(j));
 	}
 	return vertices;
 }
 
-std::vector<Math::Vertex> Circle::getPoints()
+std::vector<Vertex> Circle::createFullCircle(int resolution)
 {
-	std::vector<Math::Vertex> readOnly;
+	vector<Vertex> circle;
+	float step = 2 * pi<float>() / resolution;
+	int count = 0;
+	for (float i = 0; i < 2 * pi<float>(); i += step) {
+		Vertex vertex;
+		mat4 rotationMatrix = glm::rotate(mat4(1), rotation.x, vec3(1, 0, 0))*
+			glm::rotate(mat4(1), rotation.y, vec3(0, 1, 0))*
+			glm::rotate(mat4(1), rotation.z, vec3(0, 0, 1));
+		mat4 translateToPosition = glm::translate(mat4(1), center);
+		vec3 transformedPoint = translateToPosition * rotationMatrix  * vec4(vec3(sin(i), 0, cos(i)), 1);
+
+		vertex.id = count;
+		vertex.pos = transformedPoint;
+		circle.push_back(vertex);
+		count++;
+	}
+	for (int i = 0; i < count; i++) {
+		int j = i + 1;
+		if (j == count) {
+			j = 0;
+		}
+		circle.at(i).link(circle.at(j));
+	}
+	return circle;
+}
+
+std::vector<Vertex> Circle::getPoints()
+{
+	std::vector<Vertex> readOnly;
 	for (int i = 0; i < points.size(); i++) {
 		readOnly.push_back(points.at(i));
 	}
@@ -99,11 +131,11 @@ void Circle::addMidPoint(int point1, int point2)
 	}
 }
 
-void Circle::connectPoint(Math::Vertex vertex, int id)//fix with pointers
+void Circle::connectPoint(Vertex &vertex, int id)
 {
 	for (int i = 0; i < points.size(); i++) {
 		if (points.at(i).id == id) {
-			Math::link(vertex, points.at(i));
+			vertex.link(points.at(i));
 			return;
 		}
 	}

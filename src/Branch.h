@@ -1,5 +1,6 @@
 #pragma once
 #include "Include.h"
+#include "Circle.h"
 
 using namespace std;
 using namespace glm;

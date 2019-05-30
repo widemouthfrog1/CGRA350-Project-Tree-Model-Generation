@@ -32,9 +32,91 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
 
-	m_model.shader = shader;
-	m_model.mesh = load_wavefront_data(CGRA_SRCDIR + std::string("/res//assets//teapot.obj")).build();
-	m_model.color = vec3(1, 0, 0);
+	for (int i = 0; i < 4; i++) {
+		m_models.push_back(basic_model());
+		m_models.at(i).shader = shader;
+		m_models.at(i).color = vec3(1, 0, 0);
+	}
+	
+
+	vector<Variable> alphabet;
+	vector<Rule> rules;
+	Circle base(vec3(0,0,0), 1, vec3(0,0,0));
+	std::vector<Circle> branches;
+	branches.push_back(Circle(vec3(2, 10, 0), 1, vec3(0, 0, pi<float>() / 2)));
+	branches.push_back(Circle(vec3(-2, 10, 0), 1, vec3(0, 0, -pi<float>() / 2)));
+	Branch branch(base, branches);
+	Variable start('A', branch);
+	TreeFactory treeMaker(alphabet, rules, start);
+	m_models.at(0).mesh = treeMaker.createTree();
+	vector<Vertex> points = base.createFullCircle(20);
+	vector<mesh_vertex> vertices;
+	vector<unsigned int> indices;
+	for (int i = 0; i < points.size(); i++) {
+		Vertex vertex = points.at(i);
+		for (int j = 0; j < vertex.connectionsSize(); j++) {
+			int connectionIndex = vertex.getConnection(j);
+			if (vertex.useConnection(points.at(connectionIndex))) {
+				indices.push_back(i);
+				indices.push_back(connectionIndex);
+			}
+		}
+	}
+	for (int i = 0; i < points.size(); i++) {
+		mesh_vertex vert;
+		vert.pos = points.at(i).pos;
+		vertices.push_back(vert);
+	}
+	mesh_builder builder;
+	builder.vertices = vertices;
+	builder.indices = indices;
+	builder.mode = GL_LINES;
+	m_models.at(1).mesh = builder.build();
+	vertices.clear();
+	indices.clear();
+	points = branches.at(0).createFullCircle(20);
+	for (int i = 0; i < points.size(); i++) {
+		Vertex vertex = points.at(i);
+		for (int j = 0; j < vertex.connectionsSize(); j++) {
+			int connectionIndex = vertex.getConnection(j);
+			if (vertex.useConnection(points.at(connectionIndex))) {
+				indices.push_back(i);
+				indices.push_back(connectionIndex);
+			}
+		}
+	}
+	for (int i = 0; i < points.size(); i++) {
+		mesh_vertex vert;
+		vert.pos = points.at(i).pos;
+		vertices.push_back(vert);
+	}
+	builder.vertices = vertices;
+	builder.indices = indices;
+	builder.mode = GL_LINES;
+	m_models.at(2).mesh = builder.build();
+	vertices.clear();
+	indices.clear();
+	points = branches.at(1).createFullCircle(20);
+	for (int i = 0; i < points.size(); i++) {
+		Vertex vertex = points.at(i);
+		for (int j = 0; j < vertex.connectionsSize(); j++) {
+			int connectionIndex = vertex.getConnection(j);
+			if (vertex.useConnection(points.at(connectionIndex))) {
+				indices.push_back(i);
+				indices.push_back(connectionIndex);
+			}
+		}
+	}
+	for (int i = 0; i < points.size(); i++) {
+		mesh_vertex vert;
+		vert.pos = points.at(i).pos;
+		vertices.push_back(vert);
+	}
+	builder.vertices = vertices;
+	builder.indices = indices;
+	builder.mode = GL_LINES;
+	m_models.at(3).mesh = builder.build();
+
 }
 
 
@@ -71,7 +153,10 @@ void Application::render() {
 
 
 	// draw the model
-	m_model.draw(view, proj);
+	for (int i = 0; i < m_models.size(); i++) {
+		m_models.at(i).draw(view, proj);
+	}
+	
 }
 
 

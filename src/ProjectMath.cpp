@@ -52,15 +52,15 @@ std::vector<float> Math::angleOfClosestPointsOnTwoCircles(Circle circle0, Circle
 	std::vector<float> angles;
 	vec3 circle0to1 = circle1.center - circle0.center;
 	vec3 normal0 = cross(circle0.getPoint(0.0f).pos - circle0.center, circle0.getPoint(1.0f).pos - circle0.center);
-	vec3 projection0 = projection(normalize(circle0to1), normalize(normal0));
-	vec3 planeProjection0 = normalize((normalize(circle0to1) - normalize(projection0)))*circle0.radius;
-	angles.push_back(acos(dot(planeProjection0, circle0.getPoint(0.0f).pos)));
+	vec3 projection0 = projection(circle0to1, normal0);
+	vec3 planeProjection0 = normalize(circle0to1 - projection0)*circle0.radius;
+	angles.push_back(circle0.getAngle(translate(mat4(1), circle0.center)*vec4(planeProjection0, 1)));
 
 	vec3 circle1to0 = circle0.center - circle1.center;
 	vec3 normal1 = cross(circle1.getPoint(0.0f).pos - circle1.center, circle1.getPoint(1.0f).pos - circle1.center);
-	vec3 projection1 = projection(normalize(circle1to0), normalize(normal1));
-	vec3 planeProjection1 = normalize((normalize(circle1to0) - normalize(projection1)))*circle1.radius;
-	angles.push_back(acos(dot(planeProjection1, circle1.getPoint(0.0f).pos)));
+	vec3 projection1 = projection(circle1to0, normal1);
+	vec3 planeProjection1 = normalize(circle1to0 - projection1)*circle1.radius;
+	angles.push_back(circle1.getAngle(translate(mat4(1), circle1.center)*vec4(planeProjection1, 1)));
 
 	return angles;
 }
@@ -102,7 +102,7 @@ Vertex Math::closestBasePoint(vector<Vertex> base, Vertex closest) {
 	}
 	return minPoint;
 }
-*/
+
 
 //circle must have a number of points divisible by 4
 int Math::ninetyDegreeRotation(std::vector<Vertex> circle, int point, vec3 direction)
@@ -171,7 +171,7 @@ int Math::getNeighbour(int circleSize, int point, bool leftNeighbour)
 		}
 	}
 	return neighbour;
-}
+}*/
 
 
 vec3 Math::projection(vec3 a, vec3 b) {
@@ -182,8 +182,4 @@ vec3 Math::projection(vec3 a, vec3 b) {
 		)*b;
 }
 
-void Math::Vertex::link(Vertex * vertex)
-{
-	connections.push_back(vertex->id);
-	vertex->connections.push_back(id);
-}
+
