@@ -15,7 +15,7 @@ namespace Math {
 
 	Spline spline(const std::vector<glm::vec3> controlPoints, int divisions);
 
-	std::vector<float> angleOfClosestPointsOnTwoCircles(Circle circle0, Circle circle1);
+	std::vector<float> angleOfBaseAndBranchConnectors(Circle circle0, Circle circle1);
 
 	std::vector<glm::vec3> circle(int numberOfPoints, int radius);
 	/*Vertex closestToBasePlane(std::vector<Vertex> base, std::vector<Vertex> branch);

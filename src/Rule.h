@@ -7,11 +7,11 @@ using namespace std;
 class Letter;
 
 struct Rule {
-	Letter input;
-	vector<Letter> output;
+	std::string input;
+	std::string output;
 
-	Rule(Letter input, vector<Letter> output);
+	Rule(std::string input,std::string output);
 	~Rule();
 
-	vector<Letter> checkRule(vector<Letter> tree);
+	std::string applyRule(std::string command);
 };

@@ -23,4 +23,7 @@ public:
 	std::vector<Vertex> getPoints();
 	void addMidPoint(int point1, int point2);
 	void connectPoint(Vertex &vertex, int id);
+	Vertex getClosestPoint(glm::vec3 point);
+	Vertex getBranchPoint(Circle base, glm::vec3 closestBasePoint);
+	glm::vec3 normal();
 };

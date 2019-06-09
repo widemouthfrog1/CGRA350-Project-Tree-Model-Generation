@@ -41,14 +41,29 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 
 	vector<Variable> alphabet;
 	vector<Rule> rules;
-	Circle base(vec3(0,0,0), 2, vec3(0,0,0));
+	Circle base(vec3(0,0,0), 1, vec3(0,0,0));
 	std::vector<Circle> branches;
-	branches.push_back(Circle(vec3(2, 5, 0), 1, vec3(0, 0, pi<float>() / 2)));
-	branches.push_back(Circle(vec3(0, 5, 2), 1, vec3(pi<float>() / 2, 0, 0)));
+	branches.push_back(Circle(vec3(0, 10, -1), 1, vec3(1, 0, 1)));
+	branches.push_back(Circle(vec3(0, 5, 4), 1, vec3(pi<float>() / 2, 0, 0)));
 	Branch branch(base, branches);
 	Variable start('A', branch);
 	TreeFactory treeMaker(alphabet, rules, start);
-	m_models.at(0).mesh = treeMaker.createTree();
+	
+	Turtle turtle = Turtle(glm::vec3(1, 0, 0), glm::vec3(1, 0, 0));
+	Turtle turtle2 = Turtle(glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
+	turtle.draw("F[+F]F[+F]F[+F]F[+F]F");
+	//m_models.at(0).mesh = turtle.createMesh();
+	turtle2.draw("F[+F]F[+F]F[+F]F[+F]F");
+	//m_models.at(1).mesh = turtle2.createMesh();
+	Turtle turtle3 = Turtle(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	this->rules.push_back("F:F[+CF][-CF][^CF][&CF]");
+	this->rules.push_back("CF:D((1/2+1/2)*2)F");
+	turtle3.loadRules(this->rules);
+	turtle3.draw(turtle3.getCommand("F", depth));
+	m_models.at(2).mesh = turtle3.createMesh();
+	m_models.at(3).mesh = turtle3.createMesh();
+	
+	/*m_models.at(0).mesh = treeMaker.createTree();
 	vector<Vertex> points = base.createFullCircle(20);
 	vector<mesh_vertex> vertices;
 	vector<unsigned int> indices;
@@ -115,8 +130,7 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	builder.vertices = vertices;
 	builder.indices = indices;
 	builder.mode = GL_LINES;
-	m_models.at(3).mesh = builder.build();
-
+	m_models.at(3).mesh = builder.build();*/
 }
 
 
@@ -151,10 +165,24 @@ void Application::render() {
 	if (m_show_axis) drawAxis(view, proj);
 	glPolygonMode(GL_FRONT_AND_BACK, (m_showWireframe) ? GL_LINE : GL_FILL);
 
+	if (depth != oldDepth) {
+		Turtle turtle = Turtle(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+		turtle.loadRules(this->rules);
+		turtle.draw(turtle.getCommand("F", depth));
+		m_models.at(2).mesh = turtle.createMesh();
+		m_models.at(3).mesh = m_models.at(2).mesh;
+		oldDepth = depth;
+	}
 
 	// draw the model
 	for (int i = 0; i < m_models.size(); i++) {
-		m_models.at(i).draw(view, proj);
+		if (i == 3) {
+			m_models.at(i).draw(view * translate(mat4(1), vec3(0, 0, 10)), proj);
+		}
+		else {
+			m_models.at(i).draw(view, proj);
+		}
+		
 	}
 	
 }
@@ -180,6 +208,8 @@ void Application::renderGUI() {
 	ImGui::Checkbox("Wireframe", &m_showWireframe);
 	ImGui::SameLine();
 	if (ImGui::Button("Screenshot")) rgba_image::screenshot(true);
+
+	ImGui::SliderInt("Depth", &depth, 1, 6);
 
 	
 	ImGui::Separator();

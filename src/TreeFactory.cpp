@@ -54,11 +54,13 @@ gl_mesh TreeFactory::createTree() {
 			closestBase.connections.push_back(closest.id);
 			closest.connections.push_back(closestBase.id);
 		}*/
+
 		for (int j = 0; j < branches.size(); j++) {
-			vector<float> angles = Math::angleOfClosestPointsOnTwoCircles(base, branches.at(j));
-			Vertex basePoint = base.getPoint(angles.at(0));
+			Vertex basePoint = base.getClosestPoint(branches.at(j).center);
+			basePoint.pos += base.center;
 			basePoint.id = id++;
-			Vertex branchPoint = branches.at(j).getPoint(angles.at(1));
+			Vertex branchPoint = branches.at(j).getBranchPoint(base, basePoint.pos);
+			branchPoint.pos += branches.at(j).center;
 			branchPoint.id = id++;
 			branchPoint.branch = j;
 			basePoint.link(branchPoint);
@@ -86,6 +88,9 @@ gl_mesh TreeFactory::createTree() {
 			vec3 middleVector = newBasePoints.at(newBasePoints.size()-1).pos - base.center;//position relative to the centre of the circle
 			Circle branch = branches.at(myVertices.at(vertex.getConnection(0)).branch);
 			float startAngle = branch.getAngle(branch.getPoints().at(0).pos);
+			if (startAngle < 0) {
+				startAngle += 2 * pi<float>();
+			}
 			float plusPiOver2 = startAngle + pi<float>() / 2;
 			if (plusPiOver2 >= 2 * pi<float>()) {
 				plusPiOver2 -= 2 * pi<float>();
@@ -97,12 +102,34 @@ gl_mesh TreeFactory::createTree() {
 			Vertex vertexBranchPoint;
 			Vertex bp1 = branch.getPoint(minusPiOver2);
 			Vertex bp2 = branch.getPoint(plusPiOver2);
+			vec3 rbp1 = bp1.pos - branch.center;
+			vec3 rbp2 = bp2.pos - branch.center;
 			vec3 middlePoint = middleVector + base.center;
-			if (length(bp1.pos - middlePoint) < length(bp2.pos - middlePoint)) {
-				vertexBranchPoint = bp1;
+			if (length(Math::projection(rbp1,middleVector) + middleVector) > length(middleVector)) {
+				if (length(Math::projection(rbp2, middleVector) + middleVector) > length(middleVector)) {
+					if (length(Math::projection(rbp1, middleVector)) > length(Math::projection(rbp2, middleVector))) {
+						vertexBranchPoint = bp1;
+					}
+					else {
+						vertexBranchPoint = bp2;
+					}
+				}
+				else {
+					vertexBranchPoint = bp1;
+				}
 			}
 			else {
-				vertexBranchPoint = bp2;
+				if (length(Math::projection(rbp2, middleVector) + middleVector) > length(middleVector)) {
+					vertexBranchPoint = bp2;
+				}
+				else {
+					if (length(Math::projection(rbp1, middleVector)) < length(Math::projection(rbp2, middleVector))) {
+						vertexBranchPoint = bp1;
+					}
+					else {
+						vertexBranchPoint = bp2;
+					}
+				}
 			}
 			vertexBranchPoint.id = id++;
 			vec3 vertexBranchPos = vertexBranchPoint.pos;

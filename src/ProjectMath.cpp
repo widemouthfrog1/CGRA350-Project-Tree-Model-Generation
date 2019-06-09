@@ -47,21 +47,21 @@ Spline Math::spline(const vector<vec3> points, int divisions) {
 	return spline;
 }
 
-std::vector<float> Math::angleOfClosestPointsOnTwoCircles(Circle circle0, Circle circle1)
+std::vector<float> Math::angleOfBaseAndBranchConnectors(Circle base, Circle branch)
 {
 	std::vector<float> angles;
-	vec3 circle0to1 = circle1.center - circle0.center;
-	vec3 normal0 = cross(circle0.getPoint(0.0f).pos - circle0.center, circle0.getPoint(1.0f).pos - circle0.center);
+	vec3 circle0to1 = branch.center - base.center;
+	vec3 normal0 = cross(base.getPoint(0.0f).pos - base.center, base.getPoint(1.0f).pos - base.center);
 	vec3 projection0 = projection(circle0to1, normal0);
-	vec3 planeProjection0 = normalize(circle0to1 - projection0)*circle0.radius;
-	angles.push_back(circle0.getAngle(translate(mat4(1), circle0.center)*vec4(planeProjection0, 1)));
+	vec3 planeProjection0 = normalize(circle0to1 - projection0)*base.radius;
+	angles.push_back(base.getAngle(translate(mat4(1), base.center)*vec4(planeProjection0, 1)));
 
-	vec3 circle1to0 = circle0.center - circle1.center;
-	vec3 normal1 = cross(circle1.getPoint(0.0f).pos - circle1.center, circle1.getPoint(1.0f).pos - circle1.center);
-	vec3 projection1 = projection(circle1to0, normal1);
-	vec3 planeProjection1 = normalize(circle1to0 - projection1)*circle1.radius;
-	angles.push_back(circle1.getAngle(translate(mat4(1), circle1.center)*vec4(planeProjection1, 1)));
-
+	vec3 normal1 = cross(branch.getPoint(0.0f).pos - branch.center, branch.getPoint(1.0f).pos - branch.center);
+	vec3 centerToNormal0 = normal0 - branch.center;
+	vec3 projectionOnNormal1 = projection(centerToNormal0, normal1);
+	vec3 planeProjection1 = normalize(centerToNormal0 - projectionOnNormal1)*branch.radius;
+	angles.push_back(branch.getAngle(translate(mat4(1), branch.center)*vec4(planeProjection1, 1)));
+	angles.push_back(branch.getAngle(translate(mat4(1), branch.center)*vec4(planeProjection1, 1)) + pi<float>());
 	return angles;
 }
 

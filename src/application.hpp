@@ -3,6 +3,7 @@
 
 #include "Include.h"
 #include "TreeFactory.h"
+#include "Turtle.h"
 
 // Basic model that holds the shader, mesh and transform for drawing.
 // Can be copied and modified for adding in extra information for drawing
@@ -17,6 +18,7 @@ struct basic_model {
 	void draw(const glm::mat4 &view, const glm::mat4 proj);
 };
 
+class Turtle;
 
 // Main application class
 //
@@ -42,6 +44,11 @@ private:
 
 	// geometry
 	std::vector<basic_model> m_models;
+
+	//Project
+	int depth = 1;
+	int oldDepth = 1;
+	std::vector<std::string> rules;
 
 public:
 	// setup

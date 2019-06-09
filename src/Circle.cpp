@@ -1,4 +1,5 @@
 #include "Circle.h"
+#include "ProjectMath.h"
 
 Circle::Circle(vec3 center, float radius, vec3 rotation)
 {
@@ -37,13 +38,22 @@ float Circle::getAngle(glm::vec3 point)
 		glm::rotate(mat4(1), -rotation.z, vec3(0, 0, 1));
 	mat4 translateToOrigin = glm::translate(mat4(1), -center);
 	vec3 transformedPoint = rotationMatrix * translateToOrigin * vec4(point, 1);
-	if (!(transformedPoint.z < 0.001 && transformedPoint.z > -0.001)) {
-		return acos(transformedPoint.z/radius);
+	if (transformedPoint.z > 0 ) {
+		if (transformedPoint.x > 0) {
+			return acos(transformedPoint.z / radius);
+		}
+		else {
+			return -acos(transformedPoint.z / radius);
+		}
 	}
 	else {
-		return asin(transformedPoint.x/radius);
+		if (transformedPoint.x > 0) {
+			return acos(transformedPoint.z / radius);
+		}
+		else {
+			return -acos(transformedPoint.z / radius);
+		}
 	}
-	
 }
 
 std::vector<Vertex> Circle::createCircle(int startingID)
@@ -139,4 +149,48 @@ void Circle::connectPoint(Vertex &vertex, int id)
 			return;
 		}
 	}
+}
+
+Vertex Circle::getClosestPoint(vec3 point)
+{
+	vec3 normal = this->normal();
+	vec3 position = point - center;
+	vec3 projOnNorm = Math::projection(position, normal);
+	vec3 closestPoint = normalize(position - projOnNorm)*radius;
+	Vertex vertex;
+	vertex.pos = closestPoint;
+	return vertex;
+}
+
+Vertex Circle::getBranchPoint(Circle base, glm::vec3 closestBasePoint)
+{
+	Vertex branchPoint = getClosestPoint(closestBasePoint);
+	vec3 normal = this->normal();
+	vec3 baseNormal = base.normal();
+	vec3 planeNormal = cross(baseNormal, closestBasePoint);
+	vec3 normalOnPlaneNormal = Math::projection(normal, planeNormal);
+	vec3 normalOnPlane;
+	if (normalOnPlaneNormal.x < 0.0001 && normalOnPlaneNormal.x > -0.0001 && normalOnPlaneNormal.y < 0.0001 && normalOnPlaneNormal.y > -0.0001 && normalOnPlaneNormal.z < 0.0001 && normalOnPlaneNormal.z > -0.0001) {
+		return branchPoint; //normal is perpendicular to baseNormal
+	}
+	else {
+		normalOnPlane = normalOnPlaneNormal - normal;
+	}
+	vec3 normalOnClosest = Math::projection(normal, closestBasePoint);
+	float angle = acos(dot(normalOnPlane, normal));
+	if (angle == 0 || angle == pi<float>() || length(normalOnClosest + closestBasePoint) > length(closestBasePoint)) {
+		//return far point
+		return getPoint(getAngle(branchPoint.pos) + pi<float>());
+	}
+	else {
+		//return close point
+		return branchPoint;
+	}
+}
+
+
+
+glm::vec3 Circle::normal()
+{
+	return cross(getPoint(0).pos - center, getPoint(1).pos - center);
 }
