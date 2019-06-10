@@ -286,6 +286,138 @@ cgra::gl_mesh Turtle::createMesh()
 	return builder.build();
 }
 
+std::vector<Branch> Turtle::createBranches(string command, int resolution, mat4 groundAngle)
+{
+	std::vector<Branch> branches;
+	for (int i = 0; i < command.size(); i++) {
+		std::string token;
+		token.push_back(command.at(i));
+		if (token.at(0) == 'F') {
+			glm::vec3 startPosition = position;
+			this->position += direction * distance;
+			mat4 rotation = glm::rotate(mat4(1), acos(glm::dot(direction, vec3(0, 1, 0))), glm::cross(direction, vec3(0, 1, 0)));
+			Circle end(position, radius, 1, rotation);
+			std::shared_ptr<Branch> start = make_shared<Branch>(Branch());
+			if (branches.size() == 0) {
+				start->base = Circle(startPosition, radius, resolution, groundAngle);
+			}
+			else if(moved){
+				start = branch;
+			}
+			else {
+				start = make_shared<Branch>(branches.at(branches.size() - 1));
+			}
+			Branch b = Branch(end);
+			start->addBranch(b);
+			branches.push_back(b);
+			moved = false;
+		}
+		else if (token.at(0) == 'f') {
+			//this would make an odd tree
+			this->position += direction * distance;
+			moved = true;
+		}
+		else if (token.at(0) == '[') {
+			SavePoint point;
+			point.position = position;
+			point.direction = direction;
+			point.distance = this->distance;
+			point.angle = this->angle;
+			point.radius = this->radius;
+			point.branch = this->branch;
+			this->level++;
+			stack.push_back(point);
+		}
+		else if (token.at(0) == ']') {
+			SavePoint point = stack.at(stack.size() - 1);
+			stack.pop_back();
+			this->position = point.position;
+			this->direction = point.direction;
+			this->distance = point.distance;
+			this->angle = point.angle;
+			this->radius = point.radius;
+			this->branch = point.branch;
+			this->level--;
+			moved = true;
+		}
+		else if (token.at(0) == '+') {
+			glm::mat4 rotation = glm::rotate(glm::mat4(1), this->angle, glm::vec3(0, 0, 1));
+			this->direction = rotation * glm::vec4(direction, 1);
+		}
+		else if (token.at(0) == '-') {
+			glm::mat4 rotation = glm::rotate(glm::mat4(1), -this->angle, glm::vec3(0, 0, 1));
+			this->direction = rotation * glm::vec4(direction, 1);
+		}
+		else if (token.at(0) == '&') {//pitch down
+			glm::mat4 rotation = glm::rotate(glm::mat4(1), this->angle, glm::vec3(-1, 0, 0));
+			this->direction = rotation * glm::vec4(direction, 1);
+		}
+		else if (token.at(0) == '^') {//pitch up
+			glm::mat4 rotation = glm::rotate(glm::mat4(1), -this->angle, glm::vec3(-1, 0, 0));
+			this->direction = rotation * glm::vec4(direction, 1);
+		}
+		else if (token.at(0) == '\\') {
+			glm::mat4 rotation = glm::rotate(glm::mat4(1), this->angle, glm::vec3(0, 1, 0));
+			this->direction = rotation * glm::vec4(direction, 1);
+		}
+		else if (token.at(0) == '/') {
+			glm::mat4 rotation = glm::rotate(glm::mat4(1), -this->angle, glm::vec3(0, 1, 0));
+			this->direction = rotation * glm::vec4(direction, 1);
+		}
+		else if (token.at(0) == '|') {
+			glm::mat4 rotation = glm::rotate(glm::mat4(1), glm::pi<float>(), glm::vec3(0, 0, 1));
+			this->direction = rotation * glm::vec4(direction, 1);
+		}
+		else if (token.at(0) == 'D') {
+			token = "";
+			i += 2;
+			int j = 0;
+			while (true) {
+				if (command.at(i) == ')') {
+					if (j == 0) {
+						break;
+					}
+					token += command.at(i);
+					i++;
+					j--;
+				}
+				else {
+					if (command.at(i) == '(') {
+						j++;
+					}
+					token += command.at(i);
+					i++;
+				}
+			}
+			this->distance = parseExpression(token).evaluate();
+		}
+		else if (token.at(0) == 'A') {
+			token = "";
+			i += 2;
+			int j = 0;
+			while (true) {
+				if (command.at(i) == ')') {
+					if (j == 0) {
+						break;
+					}
+					token += command.at(i);
+					i++;
+					j--;
+				}
+				else {
+					if (command.at(i) == '(') {
+						j++;
+					}
+					token += command.at(i);
+					i++;
+				}
+			}
+			this->angle = parseExpression(token).evaluate();
+		}
+	}
+	return branches;
+}
+
 void Turtle::loadRules(std::vector<std::string> rules)
 {
 	for (int i = 0; i < rules.size(); i++) {

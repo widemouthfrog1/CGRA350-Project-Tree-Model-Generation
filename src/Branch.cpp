@@ -1,10 +1,14 @@
 #include "Branch.h"
 
-Branch::Branch(Circle base, vector<Circle> branches) {
+Branch::Branch(Circle base) {
 	this->base = base;
-	this->branches = branches;
 }
 
 Branch::~Branch() {
 
+}
+
+void Branch::addBranch(Branch branch)
+{
+	branches.push_back(branch);
 }

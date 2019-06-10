@@ -27,7 +27,7 @@ gl_mesh TreeFactory::createTree() {
 			base_vertices.push_back(vertex);
 		}*/
 
-		vector<Circle> branches = state.at(i).getBranch().branches;
+		vector<Branch> branches = state.at(i).getBranch().branches;
 		//vector<vector<Vertex>> branch_vertices_vector;
 		/*for (int j = 0; j < branches.size(); j++) {
 			vector<Vertex> branch_vertices;
@@ -56,16 +56,16 @@ gl_mesh TreeFactory::createTree() {
 		}*/
 
 		for (int j = 0; j < branches.size(); j++) {
-			Vertex basePoint = base.getClosestPoint(branches.at(j).center);
+			Vertex basePoint = base.getClosestPoint(branches.at(j).base.center);
 			basePoint.pos += base.center;
 			basePoint.id = id++;
-			Vertex branchPoint = branches.at(j).getBranchPoint(base, basePoint.pos);
-			branchPoint.pos += branches.at(j).center;
+			Vertex branchPoint = branches.at(j).base.getBranchPoint(base, basePoint.pos);
+			branchPoint.pos += branches.at(j).base.center;
 			branchPoint.id = id++;
 			branchPoint.branch = j;
 			basePoint.link(branchPoint);
 			base.addPoint(basePoint);
-			branches.at(j).addPoint(branchPoint);
+			branches.at(j).base.addPoint(branchPoint);
 
 			myVertices.push_back(basePoint);
 			myVertices.push_back(branchPoint);
@@ -86,7 +86,7 @@ gl_mesh TreeFactory::createTree() {
 			base.addMidPoint(j, k);
 			vector<Vertex> newBasePoints = base.getPoints();
 			vec3 middleVector = newBasePoints.at(newBasePoints.size()-1).pos - base.center;//position relative to the centre of the circle
-			Circle branch = branches.at(myVertices.at(vertex.getConnection(0)).branch);
+			Circle branch = branches.at(myVertices.at(vertex.getConnection(0)).branch).base;
 			float startAngle = branch.getAngle(branch.getPoints().at(0).pos);
 			if (startAngle < 0) {
 				startAngle += 2 * pi<float>();
@@ -134,7 +134,7 @@ gl_mesh TreeFactory::createTree() {
 			vertexBranchPoint.id = id++;
 			vec3 vertexBranchPos = vertexBranchPoint.pos;
 
-			Circle neighbourBranch = branches.at(myVertices.at(neighbour.getConnection(0)).branch);
+			Circle neighbourBranch = branches.at(myVertices.at(neighbour.getConnection(0)).branch).base;
 			startAngle = neighbourBranch.getAngle(neighbourBranch.getPoints().at(0).pos);
 			plusPiOver2 = startAngle + pi<float>() / 2;
 			if (plusPiOver2 >= 2 * pi<float>()) {

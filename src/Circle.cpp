@@ -1,11 +1,31 @@
 #include "Circle.h"
 #include "ProjectMath.h"
 
+Circle::Circle(glm::vec3 center, float radius, int resolution, glm::mat4 rotation)
+{
+	this->center = center;
+	this->radius = radius;
+	this->matrixRotation = rotation;
+	for (int i = 0; i < resolution*4; i++) {//this resolution is multiplied by 4 to ensure the resolution is divisible by 4
+		addPoint(resolution / 4 * 2 * pi<float>());
+	}
+}
+
 Circle::Circle(vec3 center, float radius, vec3 rotation)
 {
 	this->center = center;
 	this->radius = radius;
 	this->rotation = rotation;
+}
+
+void Circle::increaseResolution(int point1, int point2, int resolution)
+{
+	float angle1 = getAngle(this->points.at(point1).pos);
+	float angle2 = getAngle(this->points.at(point2).pos);
+	float step = (angle2 - angle1) / (resolution + 1);
+	for (float i = angle1 + step; i < angle2; i += step) {
+		this->addPoint(i);
+	}
 }
 
 void Circle::addPoint(float angle)

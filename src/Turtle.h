@@ -2,12 +2,15 @@
 #include "Include.h"
 #include "Vertex.h"
 #include "Rule.h"
+#include "Branch.h"
 
 struct SavePoint {
 	glm::vec3 position;
 	glm::vec3 direction;
 	float distance;
 	float angle;
+	float radius;
+	std::shared_ptr<Branch> branch;
 };
 
 
@@ -80,6 +83,8 @@ class Turtle {
 	std::vector<Vertex> vertices;
 	float distance = 1;
 	float angle = glm::pi<float>()/8;
+	float radius = 1;
+	std::shared_ptr<Branch> branch;
 	bool moved = true;
 	int id = 0;
 	vector<Rule> ruleList;
@@ -92,6 +97,7 @@ public:
 
 	void draw(std::string command);
 	cgra::gl_mesh createMesh();
+	std::vector<Branch> createBranches(std::string command, int resolution, glm::mat4 groundAngle);
 	void loadRules(std::vector<std::string> rules);
 	Expression parseExpression(std::string token);
 	std::string getCommand(std::string axiom, int depth);

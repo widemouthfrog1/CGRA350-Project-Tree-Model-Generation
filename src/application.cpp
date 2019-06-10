@@ -45,9 +45,9 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	std::vector<Circle> branches;
 	branches.push_back(Circle(vec3(0, 10, -1), 1, vec3(1, 0, 1)));
 	branches.push_back(Circle(vec3(0, 5, 4), 1, vec3(pi<float>() / 2, 0, 0)));
-	Branch branch(base, branches);
+	/*Branch branch(base, branches);
 	Variable start('A', branch);
-	TreeFactory treeMaker(alphabet, rules, start);
+	TreeFactory treeMaker(alphabet, rules, start);*/
 	
 	Turtle turtle = Turtle(glm::vec3(1, 0, 0), glm::vec3(1, 0, 0));
 	Turtle turtle2 = Turtle(glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
@@ -57,7 +57,7 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	//m_models.at(1).mesh = turtle2.createMesh();
 	Turtle turtle3 = Turtle(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	this->rules.push_back("F:F[+CF][-CF][^CF][&CF]");
-	this->rules.push_back("CF:D((1/2+1/2)*2)F");
+	this->rules.push_back("CF:D(d/l)F");
 	turtle3.loadRules(this->rules);
 	turtle3.draw(turtle3.getCommand("F", depth));
 	m_models.at(2).mesh = turtle3.createMesh();

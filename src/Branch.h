@@ -10,8 +10,10 @@ class Circle;
 class Branch {
 public:
 	Circle base;
-	std::vector<Circle> branches;
+	std::vector<Branch> branches;
 	Branch() {};
-	Branch(Circle base, std::vector<Circle> branches);
+	Branch(Circle base);
 	~Branch();
+	void addBranch(Branch branch);
 };
+
