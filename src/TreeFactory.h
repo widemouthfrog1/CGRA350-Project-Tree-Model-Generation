@@ -13,10 +13,9 @@ class Variable;
 class Rule;
 
 class TreeFactory {
-	vector<Variable> alphabet;
+	vector<Branch> branches;
 public:
-	vector<Variable> state;
-	TreeFactory(vector<Variable> alphabet, vector<Rule> rules, Variable start);
+	TreeFactory(vector<Branch> branches);
 	~TreeFactory();
 	gl_mesh createTree();
 	void next();

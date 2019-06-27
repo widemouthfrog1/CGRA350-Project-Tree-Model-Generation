@@ -6,11 +6,15 @@
 
 struct SavePoint {
 	glm::vec3 position;
-	glm::vec3 direction;
+	float angleH;
+	float angleL;
+	float angleU;
+	glm::mat4 rotation;
 	float distance;
 	float angle;
 	float radius;
 	std::shared_ptr<Branch> branch;
+	std::shared_ptr<Circle> circle;//for cylinders
 };
 
 
@@ -46,20 +50,24 @@ struct Expression {
 		}
 	}
 
-	float evaluate() {
+	float evaluate(std::mt19937 &randomNumberGenerator) {
 		if (constructor == 0) {
 			if (exp1 != nullptr) {
 				if (op == '+') {
-					return exp1->evaluate() + exp2->evaluate();
+					return exp1->evaluate(randomNumberGenerator) + exp2->evaluate(randomNumberGenerator);
 				}
 				else if (op == '-') {
-					return exp1->evaluate() - exp2->evaluate();
+					return exp1->evaluate(randomNumberGenerator) - exp2->evaluate(randomNumberGenerator);
 				}
 				else if (op == '*') {
-					return exp1->evaluate() * exp2->evaluate();
+					return exp1->evaluate(randomNumberGenerator) * exp2->evaluate(randomNumberGenerator);
 				}
 				else if (op == '/') {
-					return exp1->evaluate() / exp2->evaluate();
+					return exp1->evaluate(randomNumberGenerator) / exp2->evaluate(randomNumberGenerator);
+				}
+				else if (op == '>') {
+					std::uniform_real_distribution<float> dis(exp1->evaluate(randomNumberGenerator), exp2->evaluate(randomNumberGenerator));
+					return dis(randomNumberGenerator);
 				}
 			}
 			else {
@@ -77,27 +85,35 @@ struct Expression {
 };
 
 class Turtle {
-	glm::vec3 position;
-	glm::vec3 direction;
+	glm::vec3 position = vec3(0,0,0);
+	float angleH = 0;
+	float angleL = 0;
+	float angleU = 0;
+	glm::mat4 rotation = mat4(1);
 	std::vector<SavePoint> stack;
 	std::vector<Vertex> vertices;
 	float distance = 1;
 	float angle = glm::pi<float>()/8;
-	float radius = 1;
+	float radius = 0.1;
 	std::shared_ptr<Branch> branch;
 	bool moved = true;
 	int id = 0;
 	vector<Rule> ruleList;
 	int level = 0;
+	std::shared_ptr<Circle> circle;
+	std::shared_ptr<Circle> lastCircle;
 public:
-	Turtle(glm::vec3 startingPosition, glm::vec3 startingDirection) {
-		this->position = startingPosition;
-		this->direction = startingDirection;
+	Turtle(glm::mat4 rotation) {
+		this->rotation = rotation;
+	}
+	Turtle() {
 	}
 
-	void draw(std::string command);
+	void draw(std::string command, std::mt19937 randomNumberGenerator);
 	cgra::gl_mesh createMesh();
-	std::vector<Branch> createBranches(std::string command, int resolution, glm::mat4 groundAngle);
+	std::vector<Branch> createBranches(std::string command, int resolution, glm::mat4 groundAngle, std::mt19937 randomNumberGenerator);
+	std::vector<cgra::gl_mesh> cylinders(std::string command, int resolution, std::mt19937 randomNumberGenerator);
+	cgra::gl_mesh cylinder(Circle base, Circle branch);
 	void loadRules(std::vector<std::string> rules);
 	Expression parseExpression(std::string token);
 	std::string getCommand(std::string axiom, int depth);

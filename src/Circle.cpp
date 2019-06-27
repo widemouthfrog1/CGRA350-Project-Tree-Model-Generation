@@ -5,9 +5,10 @@ Circle::Circle(glm::vec3 center, float radius, int resolution, glm::mat4 rotatio
 {
 	this->center = center;
 	this->radius = radius;
+	this->rotation = vec3(0, 0, 0);
 	this->matrixRotation = rotation;
 	for (int i = 0; i < resolution*4; i++) {//this resolution is multiplied by 4 to ensure the resolution is divisible by 4
-		addPoint(resolution / 4 * 2 * pi<float>());
+		addPoint((i * 2 * pi<float>())/(resolution *4.0f));
 	}
 }
 
@@ -46,7 +47,7 @@ Vertex Circle::getPoint(float angle)
 		glm::rotate(mat4(1), rotation.z, vec3(0, 0, 1));
 	mat4 translateToPosition = glm::translate(mat4(1), center);
 	Vertex vertex;
-	vertex.pos = translateToPosition * rotationMatrix * vec4(point, 1);
+	vertex.pos = translateToPosition * rotationMatrix * this->matrixRotation * vec4(point, 1);
 	return vertex;
 }
 
@@ -57,7 +58,7 @@ float Circle::getAngle(glm::vec3 point)
 		glm::rotate(mat4(1), -rotation.y, vec3(0, 1, 0))*
 		glm::rotate(mat4(1), -rotation.z, vec3(0, 0, 1));
 	mat4 translateToOrigin = glm::translate(mat4(1), -center);
-	vec3 transformedPoint = rotationMatrix * translateToOrigin * vec4(point, 1);
+	vec3 transformedPoint = glm::inverse(this->matrixRotation)*rotationMatrix * translateToOrigin * vec4(point, 1);
 	if (transformedPoint.z > 0 ) {
 		if (transformedPoint.x > 0) {
 			return acos(transformedPoint.z / radius);
@@ -145,6 +146,54 @@ std::vector<Vertex> Circle::getPoints()
 	return readOnly;
 }
 
+std::vector<Vertex> Circle::getMidPoints(int point1, int point2)
+{
+	std::vector<Vertex> midPoints;
+	float angle1 = getAngle(getPoints().at(point1).pos);
+	float angle2 = getAngle(getPoints().at(point2).pos);
+	float angle;
+	if (angle2 > angle1) {
+		angle = (angle2 + angle1) / 2.0f;
+	}
+	else {
+		float angle = (angle2 + 2 * pi<float>() + angle1) / 2.0f;
+		if (angle >= 2 * pi<float>()) {
+			angle -= 2 * pi<float>();
+		}
+	}
+	float pointAngle;
+	int angleCheck = 0;
+	for (int i = 0; i < points.size(); i++) {
+		pointAngle = getAngle(getPoints().at(i).pos);
+		if (pointAngle - angle < 0.0001 && pointAngle - angle > -0.0001) {
+			midPoints.push_back(getPoints().at(i));
+			break;
+		}
+		if (pointAngle < angle) {
+			if (angleCheck == 0) {
+				angleCheck = -1;
+			}
+			else if (pointAngle > angle) {
+				midPoints.push_back(getPoints().at(i));
+				midPoints.push_back(getPoints().at(i-1));
+				break;
+			}
+		}
+		else {
+			if (angleCheck == 0) {
+				angleCheck = 1;
+			}
+			else if (pointAngle < angle) {
+				midPoints.push_back(getPoints().at(i));
+				midPoints.push_back(getPoints().at(i - 1));
+				break;
+			}
+		}
+	}
+
+	return midPoints;
+}
+
 void Circle::addMidPoint(int point1, int point2)
 {
 	float angle1 = getAngle(getPoints().at(point1).pos);
@@ -173,17 +222,45 @@ void Circle::connectPoint(Vertex &vertex, int id)
 
 Vertex Circle::getClosestPoint(vec3 point)
 {
+	Vertex closestPoint = this->points.at(0);
+	float smallestDistance = glm::length(closestPoint.pos - point);
+	
+	for (int i = 1; i < this->points.size(); i++) {
+		Vertex newPoint = points.at(i);
+		float distance = length(newPoint.pos - point);
+		if (distance < smallestDistance) {
+			closestPoint = newPoint;
+			smallestDistance = distance;
+		}
+	}
+	//general solution
+	/*
 	vec3 normal = this->normal();
 	vec3 position = point - center;
 	vec3 projOnNorm = Math::projection(position, normal);
 	vec3 closestPoint = normalize(position - projOnNorm)*radius;
 	Vertex vertex;
 	vertex.pos = closestPoint;
-	return vertex;
+	*/
+	return closestPoint;
 }
 
-Vertex Circle::getBranchPoint(Circle base, glm::vec3 closestBasePoint)
+Vertex Circle::getBranchPoint(Circle base/*, glm::vec3 closestBasePoint*/)
 {
+	vec3 baseNormal = base.normal();
+	float smallestLength = -1;
+	int index;
+	for (int i = 0; i < this->points.size(); i++) {
+		vec3 relativePosition = this->points.at(i).pos - base.center;
+		vec3 projection = Math::projection(relativePosition, baseNormal);
+		float length = glm::length(projection);
+		if (length < smallestLength || smallestLength == -1) {
+			index = i;
+			smallestLength = length;
+		}
+	}
+	return this->points.at(index);
+	/*
 	Vertex branchPoint = getClosestPoint(closestBasePoint);
 	vec3 normal = this->normal();
 	vec3 baseNormal = base.normal();
@@ -206,6 +283,8 @@ Vertex Circle::getBranchPoint(Circle base, glm::vec3 closestBasePoint)
 		//return close point
 		return branchPoint;
 	}
+	*/
+	
 }
 
 

@@ -74,6 +74,7 @@ vector<vec3> Math::circle(int numberOfPoints, int radius) {
 	}
 	return circle;
 }
+
 /*
 Vertex Math::closestToBasePlane(vector<Vertex> base, vector<Vertex> branch) {
 	//provides vertical normal due to anti-clockwise circle

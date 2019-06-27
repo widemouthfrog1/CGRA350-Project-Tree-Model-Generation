@@ -13,7 +13,7 @@ std::string Rule::applyRule(std::string command)
 	std::string newCommand;
 	int j = 0;
 	for (int i = 0; i < command.size(); i++) {
-		if (command.at(i) == input.at(j) || input.at(j) == '*') {// '*' is the special character that means any character
+		if (command.at(i) == input.at(j) || input.at(j) == '_') {// '_' is the special character that means any character
 			j++;
 		}
 		else {

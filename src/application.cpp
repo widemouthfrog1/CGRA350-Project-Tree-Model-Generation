@@ -20,10 +20,18 @@ void basic_model::draw(const glm::mat4 &view, const glm::mat4 proj) {
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uProjectionMatrix"), 1, false, value_ptr(proj));
 	glUniformMatrix4fv(glGetUniformLocation(shader, "uModelViewMatrix"), 1, false, value_ptr(modelview));
 	glUniform3fv(glGetUniformLocation(shader, "uColor"), 1, value_ptr(color));
-
 	mesh.draw(); // draw
 }
 
+
+void Application::clearRules()
+{
+	rulesIndex = 0;
+	rules.clear();
+	for (int i = 0; i < 500; i++) {
+		guirules[i] = '\0';
+	}
+}
 
 Application::Application(GLFWwindow *window) : m_window(window) {
 	
@@ -31,12 +39,6 @@ Application::Application(GLFWwindow *window) : m_window(window) {
     sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
 	sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
 	GLuint shader = sb.build();
-
-	for (int i = 0; i < 4; i++) {
-		m_models.push_back(basic_model());
-		m_models.at(i).shader = shader;
-		m_models.at(i).color = vec3(1, 0, 0);
-	}
 	
 
 	vector<Variable> alphabet;
@@ -48,20 +50,53 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	/*Branch branch(base, branches);
 	Variable start('A', branch);
 	TreeFactory treeMaker(alphabet, rules, start);*/
-	
+	/*
 	Turtle turtle = Turtle(glm::vec3(1, 0, 0), glm::vec3(1, 0, 0));
 	Turtle turtle2 = Turtle(glm::vec3(1, 0, 0), glm::vec3(0, 1, 0));
 	turtle.draw("F[+F]F[+F]F[+F]F[+F]F");
 	//m_models.at(0).mesh = turtle.createMesh();
 	turtle2.draw("F[+F]F[+F]F[+F]F[+F]F");
+	*/
 	//m_models.at(1).mesh = turtle2.createMesh();
-	Turtle turtle3 = Turtle(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	this->rules.push_back("F:F[+CF][-CF][^CF][&CF]");
-	this->rules.push_back("CF:D(d/l)F");
-	turtle3.loadRules(this->rules);
-	turtle3.draw(turtle3.getCommand("F", depth));
-	m_models.at(2).mesh = turtle3.createMesh();
-	m_models.at(3).mesh = turtle3.createMesh();
+	Turtle turtle = Turtle();
+	this->rules.push_back("EF:F[C+EF][C-EF][C^EF][C&EF]");
+	this->rules.push_back("C:A(1)D(d*(1/2))R((1/10)/(2*l))");
+
+	turtle.loadRules(this->rules);
+	seed = rd();
+	randomNumberGenerator = mt19937(seed);
+	treeModel tree;
+	tree.position = vec3(0, 0, 2);
+	if (lines) {
+		tree.model = basic_model();
+		tree.model.shader = shader;
+		tree.model.mesh = turtle.createMesh();
+	}
+	else {
+		vector<gl_mesh> cylinders = turtle.cylinders(turtle.getCommand(axiom, depth), resolution, randomNumberGenerator);
+		for (int i = 0; i < cylinders.size(); i++) {
+			basic_model model = basic_model();
+			model.shader = shader;
+			model.mesh = cylinders.at(i);
+			tree.cylinders.push_back(model);
+		}
+	}
+	trees.push_back(tree);
+	
+	
+	treeModel tree2;
+	tree2.position = vec3(0, 0, -2);
+	if (lines) {
+		tree2.model = basic_model();
+		tree2.model.shader = shader;
+		tree2.model.mesh = tree.model.mesh;
+	}
+	else {
+		tree2.cylinders = tree.cylinders;
+	}
+	trees.push_back(tree2);
+	//vector<Branch> branches = turtle3.createBranches(turtle3.getCommand("F", depth), 10, mat4(1));
+	
 	
 	/*m_models.at(0).mesh = treeMaker.createTree();
 	vector<Vertex> points = base.createFullCircle(20);
@@ -136,6 +171,7 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 
 void Application::render() {
 	
+
 	// retrieve the window hieght
 	int width, height;
 	glfwGetFramebufferSize(m_window, &width, &height); 
@@ -165,24 +201,25 @@ void Application::render() {
 	if (m_show_axis) drawAxis(view, proj);
 	glPolygonMode(GL_FRONT_AND_BACK, (m_showWireframe) ? GL_LINE : GL_FILL);
 
-	if (depth != oldDepth) {
-		Turtle turtle = Turtle(glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	/*if (depth != oldDepth) {
+		Turtle turtle = Turtle( glm::vec3(0, 1, 0));
 		turtle.loadRules(this->rules);
-		turtle.draw(turtle.getCommand("F", depth));
-		m_models.at(2).mesh = turtle.createMesh();
-		m_models.at(3).mesh = m_models.at(2).mesh;
+		turtle.draw(turtle.getCommand(axiom, depth));
+		m_models.at(0).mesh = turtle.createMesh();
+		m_models.at(1).mesh = m_models.at(0).mesh;
 		oldDepth = depth;
-	}
+	}*/
 
 	// draw the model
-	for (int i = 0; i < m_models.size(); i++) {
-		if (i == 3) {
-			m_models.at(i).draw(view * translate(mat4(1), vec3(0, 0, 10)), proj);
+	for (int i = 0; i < trees.size(); i++) {
+		if (trees.at(i).lines) {
+			trees.at(i).model.draw(view * translate(mat4(1), trees.at(i).position), proj);
 		}
 		else {
-			m_models.at(i).draw(view, proj);
+			for (int j = 0; j < trees.at(i).cylinders.size(); j++) {
+				trees.at(i).cylinders.at(j).draw(view * translate(mat4(1), trees.at(i).position), proj);
+			}
 		}
-		
 	}
 	
 }
@@ -209,15 +246,130 @@ void Application::renderGUI() {
 	ImGui::SameLine();
 	if (ImGui::Button("Screenshot")) rgba_image::screenshot(true);
 
-	ImGui::SliderInt("Depth", &depth, 1, 6);
 
 	
 	ImGui::Separator();
+	ImGui::Text("Turtle Language:\n\nF: Move forward and draw a line/create a cylinder\nf: Move forward\n+: Turn right\n-: Turn Left\n^: Pitch up\n&: Pitch down\n/: Roll right\n\\: Roll left\n[: Save state\n]: Load last saved state\nD(EXP): Set distance to expression\nA(EXP): Set angle to expression\nR(EXP): Set radius of cylinder to expression\nEXP:\n\tExpressions support +-*/()\n\tEXP>EXP: A randomly generated number from one expression to another\n\td: The current distance moved\n\ta: The current change in angle\n\tr: The current radius\n\tl: The current level (number of saves on the stack) ");
+	ImGui::Separator();
 
 	// example of how to use input boxes
-	static float exampleInput;
-	if (ImGui::InputFloat("example input", &exampleInput)) {
-		cout << "example input changed to " << exampleInput << endl;
+	if (ImGui::Button("Generate Random Seed")) {
+		seed = rd();
+		randomNumberGenerator = mt19937(seed);
+	}
+	if (ImGui::InputText("Seed", seedText, 7, ImGuiInputTextFlags_EnterReturnsTrue)) {
+		std::string seedString(seedText);
+		std::string seedStringNumber;
+		for (int i = 0; i < seedString.size(); i++) {
+			seedStringNumber += to_string((unsigned int)(seedString.at(i)));
+		}
+		seed = stoull(seedStringNumber);
+		randomNumberGenerator = mt19937(seed);
+	}
+	ImGui::Text(to_string(seed).c_str());
+	ImGui::Checkbox("Lines", &lines);
+	ImGui::Checkbox("SelectAll", &selectAll);
+	ImGui::SliderInt("SelectedTree", &selectedTree, 0, trees.size() - 1);
+	
+	
+	
+	ImGui::Combo("Presets", &presetNumber, stringPresetNames, 4);
+	if(ImGui::Button("Use Preset")) {
+			clearRules();
+			for (int i = 0; i < 500; i++) {
+				axiom[i] = '\0';
+			}
+			std::string s = std::string(presets[presetNumber][0]);
+			for (int i = 0; i < s.size(); i++) {
+				axiom[i] = s.at(i);
+			}
+			s = std::string(presets[presetNumber][1]);
+			for (int i = 0; i < s.size(); i++) {
+				guirules[i] = s.at(i);
+			}
+			rules.push_back(presets[presetNumber][2]);
+			rules.push_back(presets[presetNumber][3]);
+			rules.push_back(presets[presetNumber][4]);
+			rulesIndex = s.size();
+	}
+	if (ImGui::Button("Clear Rules")) {
+		clearRules();
+	}
+	ImGui::InputText("Axiom", axiom, 500);
+	if (ImGui::InputText("Add Rule:", rule, 50, ImGuiInputTextFlags_EnterReturnsTrue)) {
+		rules.push_back(std::string(rule));
+		if (rules.size() != 1) {
+			guirules[rulesIndex] = '\n';
+		}
+		for (int i = 0; i < rules.at(rules.size() - 1).size(); i++) {
+			guirules[rulesIndex + i + 1] = rules.at(rules.size() - 1).at(i);
+		}
+		rulesIndex += rules.at(rules.size() - 1).size() + 1;
+	}
+	ImGui::Text(guirules);
+	ImGui::SliderInt("Depth", &depth, 1, 6);
+	if (ImGui::Button("Generate Tree")) {
+		shader_builder sb;
+		sb.set_shader(GL_VERTEX_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_vert.glsl"));
+		sb.set_shader(GL_FRAGMENT_SHADER, CGRA_SRCDIR + std::string("//res//shaders//color_frag.glsl"));
+		GLuint shader = sb.build();
+		Turtle turtle = Turtle();
+		turtle.loadRules(rules);
+		gl_mesh mesh;
+		vector<gl_mesh> cylinders;
+		string command = turtle.getCommand(axiom, depth);
+		//cout << command << endl;
+		if (lines) {
+			turtle.draw(command, randomNumberGenerator);
+			mesh = turtle.createMesh();
+		}
+		else {
+			cylinders = turtle.cylinders(command, resolution, randomNumberGenerator);
+		}
+		if (selectAll) {
+			for (int i = 0; i < trees.size(); i++) {
+				if (lines) {
+					treeModel tree;
+					tree.model.mesh = mesh;
+					tree.model.shader = shader;
+					tree.position = trees.at(i).position;
+					tree.lines = true;
+					trees.at(i) = tree;
+					
+				}
+				else {
+					trees.at(i).cylinders.clear();
+					for (int j = 0; j < cylinders.size(); j++) {
+						basic_model model = basic_model();
+						model.shader = shader;
+						model.mesh = cylinders.at(j);
+						trees.at(i).cylinders.push_back(model);
+						trees.at(i).lines = false;
+					}
+				}
+			}
+		}
+		else {
+			if (lines) {
+				treeModel tree;
+				tree.model.mesh = mesh;
+				tree.model.shader = shader;
+				tree.position = trees.at(selectedTree).position;
+				tree.lines = true;
+				trees.at(selectedTree) = tree;
+				
+			}
+			else {
+				trees.at(selectedTree).cylinders.clear();
+				for (int j = 0; j < cylinders.size(); j++) {
+					basic_model model = basic_model();
+					model.shader = shader;
+					model.mesh = cylinders.at(j);
+					trees.at(selectedTree).cylinders.push_back(model);
+					trees.at(selectedTree).lines = false;
+				}
+			}
+		}
 	}
 
 	// finish creating window
