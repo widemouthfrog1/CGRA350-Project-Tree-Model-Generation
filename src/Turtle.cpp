@@ -248,6 +248,7 @@ cgra::gl_mesh Turtle::createMesh()
 std::vector<Branch> Turtle::createBranches(string command, int resolution, mat4 groundAngle, std::mt19937 randomNumberGenerator)
 {
 	std::vector<Branch> branches;
+
 	for (int i = 0; i < command.size(); i++) {
 		std::string token;
 		token.push_back(command.at(i));
@@ -256,17 +257,18 @@ std::vector<Branch> Turtle::createBranches(string command, int resolution, mat4 
 			mat4 rotation = glm::rotate(glm::mat4(1), this->angleH, glm::vec3(0, 1, 0))
 				*glm::rotate(glm::mat4(1), this->angleL, glm::vec3(0, 0, 1))
 				*glm::rotate(glm::mat4(1), this->angleU, glm::vec3(1, 0, 0));
-			this->position += vec3(rotation * vec4(0, 1, 0, 1) * distance);
-			Circle end(position, radius, 1, rotation);
+			this->position += vec3(this->rotation * rotation * vec4(0, 1, 0, 1) * distance);
+			Circle end(position, radius, resolution, this->rotation * rotation);
+			this->rotation = this->rotation*rotation;
 			std::shared_ptr<Branch> start = make_shared<Branch>(Branch());
 			if (branches.size() == 0) {
-				start->base = Circle(startPosition, radius, resolution, groundAngle);
+				start->base = Circle(startPosition, radius, resolution, mat4(1));//ground angle to ba taken into account here
 			}
 			else if(moved){
 				start = branch;
 			}
 			else {
-				start = make_shared<Branch>(branches.at(branches.size() - 1));
+				start = lastBranch;
 			}
 			Branch b = Branch(end);
 			start->addBranch(b);
@@ -279,6 +281,7 @@ std::vector<Branch> Turtle::createBranches(string command, int resolution, mat4 
 				*glm::rotate(glm::mat4(1), this->angleL, glm::vec3(0, 0, 1))
 				*glm::rotate(glm::mat4(1), this->angleU, glm::vec3(1, 0, 0));
 			this->position += vec3(rotation * vec4(0, 1, 0, 1) * distance);
+			branch = make_shared<Branch>(Branch(Circle(position, radius, resolution, mat4(1))));
 			moved = true;
 		}
 		else if (token.at(0) == '[') {
@@ -293,7 +296,6 @@ std::vector<Branch> Turtle::createBranches(string command, int resolution, mat4 
 			point.radius = this->radius;
 			point.branch = this->branch;
 			this->level++;
-			cout << level << endl;
 			stack.push_back(point);
 		}
 		else if (token.at(0) == ']') {
@@ -378,6 +380,29 @@ std::vector<Branch> Turtle::createBranches(string command, int resolution, mat4 
 			}
 			this->angle = parseExpression(token).evaluate(randomNumberGenerator);
 		}
+		else if (token.at(0) == 'R') {
+		token = "";
+		i += 2;
+		int j = 0;
+		while (true) {
+			if (command.at(i) == ')') {
+				if (j == 0) {
+					break;
+				}
+				token += command.at(i);
+				i++;
+				j--;
+			}
+			else {
+				if (command.at(i) == '(') {
+					j++;
+				}
+				token += command.at(i);
+				i++;
+			}
+		}
+		this->radius = parseExpression(token).evaluate(randomNumberGenerator);
+		}
 	}
 	return branches;
 }
@@ -397,7 +422,7 @@ std::vector<cgra::gl_mesh> Turtle::cylinders(std::string command, int resolution
 			this->position += vec3(this->rotation * rotation * vec4(0, 1, 0, 1) * distance);
 			 //vec3(0,1,0) is the initial normal of the circle
 			Circle end(position, radius, resolution, this->rotation * rotation);
-			this->rotation = this->rotation*rotation ;
+			this->rotation = this->rotation*rotation;
 			std::shared_ptr<Circle> start = make_shared<Circle>(Circle());
 			if (cylinders.size() == 0) {
 				start = make_shared<Circle>(Circle(startPosition, radius, resolution, mat4(1)));
@@ -432,8 +457,8 @@ std::vector<cgra::gl_mesh> Turtle::cylinders(std::string command, int resolution
 			point.distance = this->distance;
 			point.angle = this->angle;
 			point.radius = this->radius;
-			this->level++;
 			point.circle = this->circle;
+			this->level++;
 			stack.push_back(point);
 		}
 		else if (token.at(0) == ']') {
@@ -447,8 +472,8 @@ std::vector<cgra::gl_mesh> Turtle::cylinders(std::string command, int resolution
 			this->distance = point.distance;
 			this->angle = point.angle;
 			this->radius = point.radius;
-			this->level--;
 			this->circle = point.circle;
+			this->level--;
 			moved = true;
 		}
 		else if (token.at(0) == '+') {

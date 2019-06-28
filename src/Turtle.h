@@ -96,6 +96,7 @@ class Turtle {
 	float angle = glm::pi<float>()/8;
 	float radius = 0.1;
 	std::shared_ptr<Branch> branch;
+	std::shared_ptr<Branch> lastBranch;
 	bool moved = true;
 	int id = 0;
 	vector<Rule> ruleList;
