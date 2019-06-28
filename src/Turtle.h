@@ -91,7 +91,6 @@ class Turtle {
 	float angleU = 0;
 	glm::mat4 rotation = mat4(1);
 	std::vector<SavePoint> stack;
-	std::vector<Vertex> vertices;
 	float distance = 1;
 	float angle = glm::pi<float>()/8;
 	float radius = 0.1;
@@ -103,19 +102,30 @@ class Turtle {
 	int level = 0;
 	std::shared_ptr<Circle> circle;
 	std::shared_ptr<Circle> lastCircle;
-public:
-	Turtle(glm::mat4 rotation) {
-		this->rotation = rotation;
-	}
-	Turtle() {
-	}
 
-	void draw(std::string command, std::mt19937 randomNumberGenerator);
-	cgra::gl_mesh createMesh();
-	std::vector<Branch> createBranches(std::string command, int resolution, glm::mat4 groundAngle, std::mt19937 randomNumberGenerator);
-	std::vector<cgra::gl_mesh> cylinders(std::string command, int resolution, std::mt19937 randomNumberGenerator);
-	cgra::gl_mesh cylinder(Circle base, Circle branch);
-	void loadRules(std::vector<std::string> rules);
-	Expression parseExpression(std::string token);
+	
+
+	//core functions
+	std::vector<Vertex> createLines(std::string command, std::mt19937 randomNumberGenerator);
+	std::vector<cgra::gl_mesh> createCylinders(std::string command, int resolution, glm::mat4 groundAngle, std::mt19937 randomNumberGenerator);
+	std::vector<Vertex> singleMesh(std::string command, int resolution, glm::mat4 groundAngle, std::mt19937 randomNumberGenerator);
+	std::vector<Vertex> singleMesh(std::vector<Branch> branches);
 	std::string getCommand(std::string axiom, int depth);
+
+	//helper functions
+	cgra::gl_mesh createMesh(std::vector<Vertex> turtleVertices, GLenum mode);
+	cgra::gl_mesh cylinder(Circle base, Circle branch);
+	std::vector<Branch> createBranches(std::string command, int resolution, glm::mat4 groundAngle, std::mt19937 randomNumberGenerator);
+	Expression parseExpression(std::string token);
+
+public:
+	enum Mode {
+		LINES,
+		CYLINDERS,
+		SINGLE_MESH
+	};
+	Turtle() {}
+
+	void loadRules(std::vector<std::string> rules);
+	std::vector<cgra::gl_mesh> createMesh(Mode mode, std::string axiom, int depth, std::mt19937 randomNumberGenerator, int resolution = 0, glm::mat4 groundAngle = mat4(1));
 };

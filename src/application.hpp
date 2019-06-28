@@ -19,8 +19,7 @@ struct basic_model {
 };
 struct treeModel {
 	bool lines = false;
-	basic_model model;
-	vector<basic_model> cylinders;
+	vector<basic_model> models;
 	glm::vec3 position;
 };
 // geometry
@@ -74,13 +73,18 @@ private:
 	{"R((1/2)>0.75)D(0.1)FD(0.3)R((4/5)*r)FD(0.7)R((11/12)*r)FD(2>3)R((10/11)*r)FC", "C:PF[PFC][B]\nP:A((0-0.1)>0.1)+A((0-0.1)>0.1)^D((d/6)/(d/2))R((0.9*r)>(0.95*r))\nB:A(0>6.28)/A(0.5>1.2)+D((3/(l*4))>(9/(l*4)))R((r/2/l)>(0.9*r/l))FC","C:PF[PFC][B]", "P:A((0-0.1)>0.1)+A((0-0.1)>0.1)^D((d/6)/(d/2))R((0.8*r)>(0.85*r))", "B:A(0>6.28)/A(0.5>1.2)+D((3/(l*4))>(9/(l*4)))R((r/2)>(0.7*r))FC"}
 	};
 	char * stringPresetNames[4] = { "Basic", "Complex", "Randomised Basic", "Randomised Complex" };
-	int presetNumber = 1;
+	int presetNumber = 0;
+	int oldPresetNumber = 0;
 	int resolution = 3;
-	bool lines = false;
+	int mode = 0;
+	int oldMode = 0;
+	char * modeString[3] = { "Lines", "Cylinders", "Single Mesh" };
+	enum {LINES, CYLINDERS, SINGLE_MESH};
 	std::random_device rd;
 	char seedText[9] = "";
 	unsigned long long seed;
 	std::mt19937 randomNumberGenerator;
+	mat4 rotation = mat4(1);
 
 	void clearRules();
 public:

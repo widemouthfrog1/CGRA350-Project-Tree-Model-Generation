@@ -1,8 +1,31 @@
 #include "Turtle.h"
 
-void Turtle::draw(std::string command, std::mt19937 randomNumberGenerator)
+std::vector<cgra::gl_mesh> Turtle::createMesh(Mode mode, std::string axiom, int depth, std::mt19937 randomNumberGenerator, int resolution, glm::mat4 groundAngle)
 {
-	vertices.clear();
+	std::vector<cgra::gl_mesh> meshes;
+	std::string command = getCommand(axiom, depth);
+	if (mode == LINES) {
+		std::vector<Vertex> v = createLines(command, randomNumberGenerator);
+		cgra::gl_mesh mesh = createMesh(v, GL_LINES);
+		meshes.push_back(mesh);
+		return meshes;
+	}
+	else if (mode == CYLINDERS) {
+		return createCylinders(command, resolution, groundAngle, randomNumberGenerator);
+	}
+	else if (mode == SINGLE_MESH) {
+		std::vector<Vertex> v = singleMesh(command, resolution, groundAngle,  randomNumberGenerator);
+		cgra::gl_mesh mesh = createMesh(v, GL_TRIANGLES);
+		meshes.push_back(mesh);
+		return meshes;
+	}
+	//unknown mode used
+	return std::vector<cgra::gl_mesh>();
+}
+
+std::vector<Vertex> Turtle::createLines(std::string command, std::mt19937 randomNumberGenerator)
+{
+	std::vector<Vertex> vertices;
 	
 	for (int i = 0; i < command.size(); i++) {
 		std::string token;
@@ -150,6 +173,7 @@ void Turtle::draw(std::string command, std::mt19937 randomNumberGenerator)
 		}
 		}
 	}
+	return vertices;
 }
 
 Expression Turtle::parseExpression(std::string token) {
@@ -217,22 +241,22 @@ Expression Turtle::parseExpression(std::string token) {
 }
 
 
-cgra::gl_mesh Turtle::createMesh()
+cgra::gl_mesh Turtle::createMesh(std::vector<Vertex> turtleVertices, GLenum mode)
 {
-	for (int i = 0; i < this->vertices.size(); i++) {
-		this->vertices.at(i).resetConnections();
+	for (int i = 0; i < turtleVertices.size(); i++) {
+		turtleVertices.at(i).resetConnections();
 	}
 	std::vector<cgra::mesh_vertex> vertices;
 	std::vector<unsigned int> indices;
-	for (int i = 0; i < this->vertices.size(); i++) {
+	for (int i = 0; i < turtleVertices.size(); i++) {
 		cgra::mesh_vertex vertex;
-		vertex.pos = this->vertices.at(i).pos;
+		vertex.pos = turtleVertices.at(i).pos;
 		vertices.push_back(vertex);
 	}
-	for (int i = 0; i < this->vertices.size(); i++) {
-		Vertex* vertex = &this->vertices.at(i);
+	for (int i = 0; i < turtleVertices.size(); i++) {
+		Vertex* vertex = &turtleVertices.at(i);
 		for (int j = 0; j < vertex->connectionsSize(); j++) {
-			if (vertex->useConnection(this->vertices.at(vertex->getConnection(j)))) {
+			if (vertex->useConnection(turtleVertices.at(vertex->getConnection(j)))) {
 				indices.push_back(vertex->id);
 				indices.push_back(vertex->getConnection(j));
 			}
@@ -241,7 +265,7 @@ cgra::gl_mesh Turtle::createMesh()
 	cgra::mesh_builder builder;
 	builder.indices = indices;
 	builder.vertices = vertices;
-	builder.mode = GL_LINES;
+	builder.mode = mode;
 	return builder.build();
 }
 
@@ -407,7 +431,18 @@ std::vector<Branch> Turtle::createBranches(string command, int resolution, mat4 
 	return branches;
 }
 
-std::vector<cgra::gl_mesh> Turtle::cylinders(std::string command, int resolution, std::mt19937 randomNumberGenerator)
+std::vector<Vertex> Turtle::singleMesh(std::string command, int resolution, glm::mat4 groundAngle, std::mt19937 randomNumberGenerator)
+{
+	std::vector<Branch> branches = this->createBranches(command, resolution, groundAngle, randomNumberGenerator);
+	return std::vector<Vertex>();
+}
+
+std::vector<Vertex> Turtle::singleMesh(std::vector<Branch> branches)
+{
+	return std::vector<Vertex>();
+}
+
+std::vector<cgra::gl_mesh> Turtle::createCylinders(std::string command, int resolution, glm::mat4 groundAngle, std::mt19937 randomNumberGenerator)
 {
 	std::vector<cgra::gl_mesh> cylinders;
 

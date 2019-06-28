@@ -67,32 +67,40 @@ Application::Application(GLFWwindow *window) : m_window(window) {
 	randomNumberGenerator = mt19937(seed);
 	treeModel tree;
 	tree.position = vec3(0, 0, 2);
-	if (lines) {
-		tree.model = basic_model();
-		tree.model.shader = shader;
-		tree.model.mesh = turtle.createMesh();
+	if (mode == LINES) {
+		basic_model model = basic_model();
+		model.shader = shader;
+		model.mesh = turtle.createMesh(Turtle::LINES, this->axiom, this->depth, this->randomNumberGenerator).at(0);
+		tree.models.push_back(model);
 	}
-	else {
-		vector<gl_mesh> cylinders = turtle.cylinders(turtle.getCommand(axiom, depth), resolution, randomNumberGenerator);
+	else if(mode == CYLINDERS){
+		vector<gl_mesh> cylinders = turtle.createMesh(Turtle::CYLINDERS, this->axiom, this->depth, this->randomNumberGenerator, this->resolution, rotation);
 		for (int i = 0; i < cylinders.size(); i++) {
 			basic_model model = basic_model();
 			model.shader = shader;
 			model.mesh = cylinders.at(i);
-			tree.cylinders.push_back(model);
+			tree.models.push_back(model);
 		}
+	}
+	else if (mode == SINGLE_MESH) {
+		//WIP
 	}
 	trees.push_back(tree);
 	
 	
 	treeModel tree2;
 	tree2.position = vec3(0, 0, -2);
-	if (lines) {
-		tree2.model = basic_model();
-		tree2.model.shader = shader;
-		tree2.model.mesh = tree.model.mesh;
+	if (mode == LINES) {
+		basic_model model = basic_model();
+		model.shader = shader;
+		model.mesh = tree.models.at(0).mesh;
+		tree2.models.push_back(model);
 	}
-	else {
-		tree2.cylinders = tree.cylinders;
+	else if (mode == CYLINDERS) {
+		tree2.models = tree.models;
+	}
+	else if (mode == SINGLE_MESH) {
+		//WIP
 	}
 	trees.push_back(tree2);
 	//vector<Branch> branches = turtle3.createBranches(turtle3.getCommand("F", depth), 10, mat4(1));
@@ -213,11 +221,11 @@ void Application::render() {
 	// draw the model
 	for (int i = 0; i < trees.size(); i++) {
 		if (trees.at(i).lines) {
-			trees.at(i).model.draw(view * translate(mat4(1), trees.at(i).position), proj);
+			trees.at(i).models.at(0).draw(view * translate(mat4(1), trees.at(i).position), proj);
 		}
 		else {
-			for (int j = 0; j < trees.at(i).cylinders.size(); j++) {
-				trees.at(i).cylinders.at(j).draw(view * translate(mat4(1), trees.at(i).position), proj);
+			for (int j = 0; j < trees.at(i).models.size(); j++) {
+				trees.at(i).models.at(j).draw(view * translate(mat4(1), trees.at(i).position), proj);
 			}
 		}
 	}
@@ -267,14 +275,14 @@ void Application::renderGUI() {
 		randomNumberGenerator = mt19937(seed);
 	}
 	ImGui::Text(to_string(seed).c_str());
-	ImGui::Checkbox("Lines", &lines);
+	ImGui::Combo("Mode", &mode, modeString, 3);
 	ImGui::Checkbox("SelectAll", &selectAll);
 	ImGui::SliderInt("SelectedTree", &selectedTree, 0, trees.size() - 1);
 	
 	
 	
 	ImGui::Combo("Presets", &presetNumber, stringPresetNames, 4);
-	if(ImGui::Button("Use Preset")) {
+	if(ImGui::Button("Use Preset") || oldPresetNumber != presetNumber) {
 			clearRules();
 			for (int i = 0; i < 500; i++) {
 				axiom[i] = '\0';
@@ -291,6 +299,7 @@ void Application::renderGUI() {
 			rules.push_back(presets[presetNumber][3]);
 			rules.push_back(presets[presetNumber][4]);
 			rulesIndex = s.size();
+			oldPresetNumber = presetNumber;
 	}
 	if (ImGui::Button("Clear Rules")) {
 		clearRules();
@@ -317,58 +326,69 @@ void Application::renderGUI() {
 		turtle.loadRules(rules);
 		gl_mesh mesh;
 		vector<gl_mesh> cylinders;
-		string command = turtle.getCommand(axiom, depth);
 		//cout << command << endl;
-		if (lines) {
-			turtle.draw(command, randomNumberGenerator);
-			mesh = turtle.createMesh();
-		}
-		else {
-			cylinders = turtle.cylinders(command, resolution, randomNumberGenerator);
-		}
-		if (selectAll) {
-			for (int i = 0; i < trees.size(); i++) {
-				if (lines) {
-					treeModel tree;
-					tree.model.mesh = mesh;
-					tree.model.shader = shader;
-					tree.position = trees.at(i).position;
-					tree.lines = true;
-					trees.at(i) = tree;
-					
+		if (oldMode != mode) {
+			if (mode == LINES) {
+				mesh = turtle.createMesh(Turtle::LINES, this->axiom, this->depth, this->randomNumberGenerator).at(0);
+			}
+			else if (mode == CYLINDERS) {
+				cylinders = turtle.createMesh(Turtle::CYLINDERS, this->axiom, this->depth, this->randomNumberGenerator, this->resolution, this->rotation);
+			}else if (mode == SINGLE_MESH) {
+				//WIP
+			}
+			if (selectAll) {
+				for (int i = 0; i < trees.size(); i++) {
+					if (mode == LINES) {
+						treeModel tree;
+						tree.models.push_back(basic_model());
+						tree.models.at(0).mesh = mesh;
+						tree.models.at(0).shader = shader;
+						tree.position = trees.at(i).position;
+						tree.lines = true;
+						trees.at(i) = tree;
+
+					}
+					else if (mode == CYLINDERS) {
+						trees.at(i).models.clear();
+						for (int j = 0; j < cylinders.size(); j++) {
+							basic_model model = basic_model();
+							model.shader = shader;
+							model.mesh = cylinders.at(j);
+							trees.at(i).models.push_back(model);
+							trees.at(i).lines = false;
+						}
+					}
+					else if (mode == SINGLE_MESH) {
+						//WIP
+					}
 				}
-				else {
-					trees.at(i).cylinders.clear();
+			}
+			else {
+				if (mode == LINES) {
+					treeModel tree;
+					tree.models.push_back(basic_model());
+					tree.models.at(0).mesh = mesh;
+					tree.models.at(0).shader = shader;
+					tree.position = trees.at(selectedTree).position;
+					tree.lines = true;
+					trees.at(selectedTree) = tree;
+
+				}
+				else if(mode == CYLINDERS) {
+					trees.at(selectedTree).models.clear();
 					for (int j = 0; j < cylinders.size(); j++) {
 						basic_model model = basic_model();
 						model.shader = shader;
 						model.mesh = cylinders.at(j);
-						trees.at(i).cylinders.push_back(model);
-						trees.at(i).lines = false;
+						trees.at(selectedTree).models.push_back(model);
+						trees.at(selectedTree).lines = false;
 					}
 				}
-			}
-		}
-		else {
-			if (lines) {
-				treeModel tree;
-				tree.model.mesh = mesh;
-				tree.model.shader = shader;
-				tree.position = trees.at(selectedTree).position;
-				tree.lines = true;
-				trees.at(selectedTree) = tree;
-				
-			}
-			else {
-				trees.at(selectedTree).cylinders.clear();
-				for (int j = 0; j < cylinders.size(); j++) {
-					basic_model model = basic_model();
-					model.shader = shader;
-					model.mesh = cylinders.at(j);
-					trees.at(selectedTree).cylinders.push_back(model);
-					trees.at(selectedTree).lines = false;
+				else if (mode == SINGLE_MESH) {
+					//WIP
 				}
 			}
+			oldMode = mode;
 		}
 	}
 
