@@ -1,6 +1,6 @@
 # CGRA OpenGL Base Project
 
-To run this project you will require CMake. Run "CMake ." in the project directory. Open CGRA_PROJECT_base.sln in Visual Studio 2017. Build the base solution and run using the debugger (the button with the green triangle in the middle of the bar along the top).
+To run this project you will need CMake, OpenGL v3.3 and a C++11 compiler. Run "CMake ." in the project directory. Open CGRA_PROJECT_base.sln in Visual Studio 2017. Build the base solution and run using the debugger (the button with the green triangle in the middle of the bar along the top).
 
 Click and drag to move the camera around. I recommend fiddling with the seed, depth, and presets but feel free to try making your own tree.
 
